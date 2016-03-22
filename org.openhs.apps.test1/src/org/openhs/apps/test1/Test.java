@@ -1,13 +1,17 @@
 package org.openhs.apps.test1;
 
+import org.openhs.core.commons.Message;
+
 public class Test {
+	
+	Message msg = new Message ();
 
     public void activate() {
-        System.out.println("Starting Test----->");
+    	msg.println("org.openhs.apps.test1: activate");
     }
 
     public void deactivate() {
-        System.out.println("Stopping Test----->");
+    	msg.println("org.openhs.apps.test1: activate");
     }
 	
 	
