@@ -18,6 +18,7 @@ import java.util.regex.*;
 import java.util.Scanner;
 
 import org.openhs.core.commons.Message;
+import org.openhs.core.commons.Temperature;
 import org.openhs.core.site.data.ISiteService;
 
 public class TwoWaySerialComm {
@@ -98,8 +99,8 @@ public class TwoWaySerialComm {
                 InputStream in = serialPort.getInputStream();
                 OutputStream out = serialPort.getOutputStream();
                 
-                (new Thread(new SerialReader(in))).start();
-                (new Thread(new SerialWriter(out))).start();
+                (new Thread(new SerialReader(in, this.m_siteService))).start();
+                (new Thread(new SerialWriter(out, this.m_siteService))).start();
 
             }
             else
@@ -112,11 +113,14 @@ public class TwoWaySerialComm {
     /** */
     public static class SerialReader implements Runnable 
     {
+    	ISiteService m_siteService = null;	
+    	
         InputStream in;
         
-        public SerialReader ( InputStream in )
+        public SerialReader ( InputStream in, ISiteService ss)
         {
             this.in = in;
+            this.m_siteService = ss;
         }
         
         public void run ()
@@ -194,6 +198,15 @@ public class TwoWaySerialComm {
         			  double f = Double.parseDouble(m.group(1));
         			  
         			  System.out.println("Sensor: "+ sensorName + " Temp: " + String.format("%.2f", f));
+        			  
+        			  Temperature temp = new Temperature ();
+        			  
+        			  temp.set(f);        			  
+        			          			  
+        			  if (!this.m_siteService.setSensorTemperature("Room1", sensorName, temp)) {
+        				  System.out.println("Cannot write temp :(");
+        			  }  
+        			  
         			}
         		}        		
         	}        	
@@ -203,11 +216,14 @@ public class TwoWaySerialComm {
     /** */
     public static class SerialWriter implements Runnable 
     {
+    	ISiteService m_siteService = null;	
+    	
         OutputStream out;
         
-        public SerialWriter ( OutputStream out )
+        public SerialWriter ( OutputStream out, ISiteService ss )
         {
             this.out = out;
+            this.m_siteService = ss;
         }
         
         public void run ()
