@@ -12,8 +12,13 @@ import java.io.OutputStream;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.*;
+//import org.apache.commons.io.IOUtils;
+import java.util.Scanner;
 
 import org.openhs.core.commons.Message;
+import org.openhs.core.site.data.ISiteService;
 
 public class TwoWaySerialComm {
 		
@@ -21,6 +26,11 @@ public class TwoWaySerialComm {
      * Messages.
      */
 	Message msg = new Message ();	
+	
+    /*
+     * Basic data structure.
+     */
+    ISiteService m_siteService = null;		
 	
     SerialPort serialPort = null;
 
@@ -111,20 +121,83 @@ public class TwoWaySerialComm {
         
         public void run ()
         {
+        	String s = "";
+        	
             byte[] buffer = new byte[1024];
             int len = -1;
             try
-            {
+            {            	            	
                 while ( ( len = this.in.read(buffer)) > -1 )
-                {
-                    System.out.print(new String(buffer,0,len));
-                }
+                {                	
+                    //System.out.print(new String(buffer,0,len));   
+                    
+                    s = s + new String(buffer,0,len);
+                    
+                    if (s.contains("\n"))
+                    {                    	
+                    	decode (s);   	
+                    	s = "";
+                    }     
+                    
+                    try
+                    {
+                    	Thread.sleep (500);
+                    }
+                    catch (Exception ex)
+                    {
+                    	
+                    }
+                }                                
+                
             }
             catch ( IOException e )
             {
                 e.printStackTrace();
-            }            
+            }        
+          
         }
+        
+        void decode (String msg)
+        {        	
+			String pattern1;
+			String pattern2;
+			Pattern p;
+			Matcher m;			
+			
+        	if (msg.contains("Sensor:"))
+        	{
+    			pattern1 = "Sensor:";
+    			pattern2 = ";";
+    			
+    			p = Pattern.compile(Pattern.quote(pattern1) + "(.*?)" + Pattern.quote(pattern2));
+    			m = p.matcher(msg);    	
+    			
+    			String sensorName = "";
+    			
+    			while (m.find()) {    
+    			
+    				sensorName = m.group(1);
+    			}
+        		
+        		if (msg.contains("temp:"))
+        		{
+        			//System.out.println("decode: -->");
+        			
+        			pattern1 = "temp:";
+        			pattern2 = ";";
+        			
+        			p = Pattern.compile(Pattern.quote(pattern1) + "(.*?)" + Pattern.quote(pattern2));
+        			m = p.matcher(msg);
+        			
+        			while (m.find()) {        			 
+        			  
+        			  double f = Double.parseDouble(m.group(1));
+        			  
+        			  System.out.println("Sensor: "+ sensorName + " Temp: " + String.format("%.2f", f));
+        			}
+        		}        		
+        	}        	
+        }        
     }
 
     /** */
@@ -150,7 +223,9 @@ public class TwoWaySerialComm {
             catch ( IOException e )
             {
                 e.printStackTrace();
-            }            
+            }           
         }
     }    
+    
+
 }
