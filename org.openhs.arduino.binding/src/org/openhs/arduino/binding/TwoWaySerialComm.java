@@ -25,9 +25,9 @@ public class TwoWaySerialComm {
     SerialPort serialPort = null;
 
     private static final String PORT_NAMES[] = { 
-        "/dev/tty.usbmodem", // Mac OS X
+    //    "/dev/tty.usbmodem", // Mac OS X
 //        "/dev/usbdev", // Linux
-//        "/dev/tty", // Linux
+        "/dev/ttyS33", // Linux
 //        "/dev/serial", // Linux
 //        "COM3", // Windows
     };
@@ -38,71 +38,38 @@ public class TwoWaySerialComm {
     
     private static final int TIME_OUT = 1000; // Port open timeout
     private static final int DATA_RATE = 9600; // Arduino serial port
+
 	
-	public TwoWaySerialComm()
+    static void listPorts()
     {
-        super();
-    }	
-	
-	public boolean connectPort () {
-		
-	      try {
-	            CommPortIdentifier portId = null;
-	            Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
-
-	            // Enumerate system ports and try connecting to Arduino over each
-	            //
-	            System.out.println( "Trying:");
-	            while (portId == null && portEnum.hasMoreElements()) {
-	                // Iterate through your host computer's serial port IDs
-	                //
-	                CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
-	                System.out.println( "   port" + currPortId.getName() );
-	                for (String portName : PORT_NAMES) {
-	                    if ( currPortId.getName().equals(portName) 
-	                      || currPortId.getName().startsWith(portName)) {
-
-	                        // Try to connect to the Arduino on this port
-	                        //
-	                        // Open serial port
-	                        serialPort = (SerialPort)currPortId.open(appName, TIME_OUT);
-	                        portId = currPortId;
-	                        System.out.println( "Connected on port" + currPortId.getName() );
-	                        break;
-	                    }
-	                }
-	            }
-	        
-	            if (portId == null || serialPort == null) {
-	                System.out.println("Oops... Could not connect to Arduino");
-	                return false;
-	            }
-	            
-	            System.out.println("OKOK, detected this port: " + serialPort.getName());
-	        /*
-	            // set port parameters
-	            serialPort.setSerialPortParams(DATA_RATE,
-	                            SerialPort.DATABITS_8,
-	                            SerialPort.STOPBITS_1,
-	                            SerialPort.PARITY_NONE);
-
-	            // add event listeners
-	            serialPort.addEventListener();
-	            serialPort.notifyOnDataAvailable(true);
-
-	            // Give the Arduino some time
-	            try { Thread.sleep(2000); } catch (InterruptedException ie) {}
-	            */
-	            return true;
-	        }
-	        catch ( Exception e ) { 
-	            e.printStackTrace();
-	        }
-	        return false;
-		
-	}
+        java.util.Enumeration<CommPortIdentifier> portEnum = CommPortIdentifier.getPortIdentifiers();
+        while ( portEnum.hasMoreElements() ) 
+        {
+            CommPortIdentifier portIdentifier = portEnum.nextElement();
+            System.out.println(portIdentifier.getName()  +  " - " +  getPortTypeName(portIdentifier.getPortType()) );
+        }        
+    }
     
-    void connect ( String portName ) throws Exception
+    static String getPortTypeName ( int portType )
+    {
+        switch ( portType )
+        {
+            case CommPortIdentifier.PORT_I2C:
+                return "I2C";
+            case CommPortIdentifier.PORT_PARALLEL:
+                return "Parallel";
+            case CommPortIdentifier.PORT_RAW:
+                return "Raw";
+            case CommPortIdentifier.PORT_RS485:
+                return "RS485";
+            case CommPortIdentifier.PORT_SERIAL:
+                return "Serial";
+            default:
+                return "unknown type";
+        }
+    }
+    
+    public void connect ( String portName ) throws Exception
     {
         CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(portName);
         if ( portIdentifier.isCurrentlyOwned() )
@@ -116,7 +83,7 @@ public class TwoWaySerialComm {
             if ( commPort instanceof SerialPort )
             {
                 SerialPort serialPort = (SerialPort) commPort;
-                serialPort.setSerialPortParams(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
+                serialPort.setSerialPortParams(DATA_RATE,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
                 
                 InputStream in = serialPort.getInputStream();
                 OutputStream out = serialPort.getOutputStream();
@@ -185,5 +152,5 @@ public class TwoWaySerialComm {
                 e.printStackTrace();
             }            
         }
-    }
+    }    
 }

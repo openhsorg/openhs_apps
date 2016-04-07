@@ -17,7 +17,8 @@ public class Main {
         try
         {
           //  comm.connect("COM3"); ///dev/ttyACM0
-        	comm.connectPort();
+        	comm.listPorts();
+        	comm.connect("/dev/ttyS33");
         }
         catch ( Exception e )
         {
